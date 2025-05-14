@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSK1 字卡游戏</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background-color: #f5f9ff;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+        select, button {
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+            background-color: white;
+            cursor: pointer;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        .mode-btn {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+        .mode-btn.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .card {
+            width: 140px;
+            height: 180px;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+        .card.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            padding: 10px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .card-front {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            color: #0d47a1;
+            border: 2px solid #64b5f6;
+        }
+        .card-back {
+            background: linear-gradient(135deg, #fff9c4, #fff59d);
+            color: #f57f17;
+            transform: rotateY(180deg);
+        }
+        .card-back-english {
+            background: linear-gradient(135deg, #dcedc8, #c5e1a5);
+            color: #33691e;
+            transform: rotateY(180deg);
+        }
+        .hsk-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: #5c6bc0;
+            color: white;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+        .hanzi {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            max-width: 100%;
+            text-align: center;
+            padding: 0 5px;
+        }
+	/* 根据字数调整字体大小 */
+    	.hanzi[data-chars="1"] { font-size: 2.5rem; }
+    	.hanzi[data-chars="2"] { font-size: 2.2rem; }
+    	.hanzi[data-chars="3"] { font-size: 1.8rem; }
+    	.hanzi[data-chars="4"] { font-size: 1.6rem; }
+    	.hanzi[data-chars="5"] { font-size: 1.4rem; white-space: normal; } 
+        .pinyin {
+            font-size: 1.2rem;
+            color: #d84315;
+            margin-bottom: 5px;
+        }
+        .meaning {
+            font-size: 0.9rem;
+            padding: 0 5px;
+        }
+        .lesson-info {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            font-size: 0.7rem;
+            color: #666;
+        }
+        @media (max-width: 600px) {
+            .card {
+                width: 120px;
+                height: 160px;
+            }
+            .hanzi {
+                font-size: 1.6rem;
+            }
+	    .hanzi[data-chars="1"] { font-size: 2.2rem; }
+            .hanzi[data-chars="2"] { font-size: 2.0rem; }
+            .hanzi[data-chars="3"] { font-size: 1.6rem; }
+            .hanzi[data-chars="4"] { font-size: 1.4rem; }
+            .hanzi[data-chars="5"] { font-size: 1.2rem; }
+            .pinyin {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>HSK1 字卡游戏</h1>
+    
+    <div class="controls">
+        <div class="controls-row">
+            <select id="lesson-select">
+                <option value="all">全部课程</option>
+                <option value="1">第1课</option>
+                <option value="2">第2课</option>
+                <option value="3">第3课</option>
+                <option value="4">第4课</option>
+                <option value="5">第5课</option>
+                <option value="6">第6课</option>
+                <option value="7">第7课</option>
+                <option value="8">第8课</option>
+                <option value="9">第9课</option>
+                <option value="10">第10课</option>
+                <option value="11">第11课</option>
+                <option value="12">第12课</option>
+                <option value="13">第13课</option>
+                <option value="14">第14课</option>
+                <option value="15">第15课</option>
+           </select>
+            
+            <button id="hanzi-mode" class="mode-btn active">汉字模式</button>
+            <button id="pinyin-mode" class="mode-btn">拼音模式</button>
+        </div>
+        
+        <div class="controls-row">
+            <button id="shuffle-btn">🔀 打乱顺序</button>
+            <button id="flip-all">🔄 全部翻转</button>
+            <button id="reset-btn">🔄 重置</button>
+        </div>
+    </div>
+    
+    <div class="container" id="cards-container">
+        <!-- 卡片将通过JavaScript动态生成 -->
+    </div>
+
+    <script>
+        // HSK1词汇数据
+        const hsk1Data = [
+            { hanzi: "搬", pinyin: "bān", meaning: "to move, to carry", lesson: "1" },
+            { hanzi: "不客气", pinyin: "bú kèqi", meaning: "you're welcome, don't mention it", lesson: "1" },
+            { hanzi: "对不起", pinyin: "duìbuqǐ", meaning: "to be sorry", lesson: "1", pos: "v." },
+            { hanzi: "好", pinyin: "hǎo", meaning: "good, fine", lesson: "1", pos: "adj." },
+            { hanzi: "没关系", pinyin: "méi guānxi", meaning: "that's OK, it doesn't matter", lesson: "1" },
+            { hanzi: "你", pinyin: "nǐ", meaning: "(singular) you", lesson: "1", pos: "pron." },
+            { hanzi: "你们", pinyin: "nǐmen", meaning: "(plural) you", lesson: "1", pos: "pron." },
+            { hanzi: "您", pinyin: "nín", meaning: "(polite) you", lesson: "1", pos: "pron." },
+
+            { hanzi: "不", pinyin: "bù", meaning: "no, not", lesson: "2", pos: "adv." },
+            { hanzi: "谢谢", pinyin: "xièxie", meaning: "to thank", lesson: "2", pos: "v." },
+            { hanzi: "不客气", pinyin: "bú kèqi", meaning: "you're welcome, don't mention it", lesson: "2" },
+            { hanzi: "再见", pinyin: "zàijiàn", meaning: "to see you around", lesson: "2", pos: "v." },
+
+            { hanzi: "叫", pinyin: "jiào", meaning: "to call, to be called", lesson: "3", pos: "v." },
+            { hanzi: "老师", pinyin: "lǎoshī", meaning: "teacher", lesson: "3", pos: "n." },
+            { hanzi: "吗", pinyin: "ma", meaning: "used at the end of a question", lesson: "3", pos: "part." },
+            { hanzi: "名字", pinyin: "míngzi", meaning: "name", lesson: "3", pos: "n." },
+           { hanzi: "人", pinyin: "rén", meaning: "human, person", lesson: "3", pos: "n." },
+            { hanzi: "什么", pinyin: "shénme", meaning: "what", lesson: "3", pos: "pron." },
+            { hanzi: "是", pinyin: "shì", meaning: "to be", lesson: "3", pos: "v." },
+            { hanzi: "学生", pinyin: "xuésheng", meaning: "student", lesson: "3", pos: "n." },
+            { hanzi: "我", pinyin: "wǒ", meaning: "I, me", lesson: "3", pos: "pron." },
+            { hanzi: "中国", pinyin: "Zhōngguó", meaning: "China", lesson: "3", pos: "n." },
+            { hanzi: "美国", pinyin: "Měiguó", meaning: "the United States of America", lesson: "3", pos: "n." },
+
+            { hanzi: "的", pinyin: "de", meaning: "used after an attribute", lesson: "4", pos: "part." },
+            { hanzi: "汉语", pinyin: "Hànyǔ", meaning: "Chinese (language)", lesson: "4", pos: "n." },
+            { hanzi: "哪", pinyin: "nǎ", meaning: "which", lesson: "4", pos: "pron." },
+            { hanzi: "朋友", pinyin: "péngyou", meaning: "friend", lesson: "4", pos: "n." },
+            { hanzi: "谁", pinyin: "shéi", meaning: "who, whom", lesson: "4", pos: "pron." },
+            { hanzi: "他", pinyin: "tā", meaning: "he, him", lesson: "4", pos: "pron." },
+            { hanzi: "她", pinyin: "tā", meaning: "she, her", lesson: "4", pos: "pron." },
+            { hanzi: "同学", pinyin: "tóngxué", meaning: "classmate", lesson: "4", pos: "n." },
+            { hanzi: "呢", pinyin: "ne", meaning: "used at the end of a question", lesson: "4", pos: "part." },
+            { hanzi: "国", pinyin: "guó", meaning: "country, nation", lesson: "4", pos: "n." },
+
+            { hanzi: "八", pinyin: "bā", meaning: "eight", lesson: "5", pos: "num." },
+            { hanzi: "大", pinyin: "dà", meaning: "(of age) old", lesson: "5", pos: "adj." },
+            { hanzi: "多", pinyin: "duō", meaning: "indicating degree or extent", lesson: "5", pos: "adv." },
+            { hanzi: "几", pinyin: "jǐ", meaning: "how many", lesson: "5", pos: "pron." },
+            { hanzi: "家", pinyin: "jiā", meaning: "family", lesson: "5", pos: "n." },
+            { hanzi: "了", pinyin: "le", meaning: "used at the end of or in the middle of a sentence to indicate a change or a new circumstance", lesson: "5", pos: "part." },
+            { hanzi: "六", pinyin: "liù", meaning: "six", lesson: "5", pos: "num." },
+            { hanzi: "女儿", pinyin: "nǚ'ér", meaning: "daughter", lesson: "5", pos: "n." },
+            { hanzi: "七", pinyin: "qī", meaning: "seven", lesson: "5", pos: "num." },
+            { hanzi: "三", pinyin: "sān", meaning: "three", lesson: "5", pos: "num." },
+            { hanzi: "十", pinyin: "shí", meaning: "ten", lesson: "5", pos: "num." },
+            { hanzi: "四", pinyin: "sì", meaning: "four", lesson: "5", pos: "num." },
+            { hanzi: "岁", pinyin: "suì", meaning: "year (of age)", lesson: "5", pos: "m." },
+            { hanzi: "五", pinyin: "wǔ", meaning: "five", lesson: "5", pos: "num." },
+            { hanzi: "有", pinyin: "yǒu", meaning: "to have, there be", lesson: "5", pos: "v." },
+            { hanzi: "一", pinyin: "yī", meaning: "one", lesson: "5", pos: "num." },
+            { hanzi: "二", pinyin: "èr", meaning: "two", lesson: "5", pos: "num." },
+            { hanzi: "九", pinyin: "jiǔ", meaning: "nine", lesson: "5", pos: "num." },
+            { hanzi: "今年", pinyin: "jīnnián", meaning: "this year", lesson: "5", pos: "n." },
+            { hanzi: "口", pinyin: "kǒu", meaning: "a measure word for members of families, etc.", lesson: "5", pos: "m." },
+
+            { hanzi: "菜", pinyin: "cài", meaning: "dish, cuisine", lesson: "6", pos: "n." },
+            { hanzi: "读", pinyin: "dú", meaning: "to read", lesson: "6", pos: "v." },
+            { hanzi: "很", pinyin: "hěn", meaning: "very, quite", lesson: "6", pos: "adv." },
+            { hanzi: "会", pinyin: "huì", meaning: "can, to be able to", lesson: "6", pos: "mod." },
+            { hanzi: "妈妈", pinyin: "māma", meaning: "mother", lesson: "6", pos: "n." },
+            { hanzi: "说", pinyin: "shuō", meaning: "to speak, to say", lesson: "6", pos: "v." },
+            { hanzi: "写", pinyin: "xiě", meaning: "to write", lesson: "6", pos: "v." },
+            { hanzi: "怎么", pinyin: "zěnme", meaning: "(indicating nature, condition or manner, etc.)", lesson: "6", pos: "pron." },
+            { hanzi: "字", pinyin: "zì", meaning: "character, word", lesson: "6", pos: "n." },
+            { hanzi: "做", pinyin: "zuò", meaning: "to make, to produce", lesson: "6", pos: "v." },
+            { hanzi: "好吃", pinyin: "hǎochī", meaning: "delicious, tasty", lesson: "6", pos: "adj." },
+            { hanzi: "汉字", pinyin: "Hànzì", meaning: "Chinese character", lesson: "6", pos: "n." },
+
+            { hanzi: "今天", pinyin: "jīntiān", meaning: "today", lesson: "7", pos: "n." },
+            { hanzi: "看", pinyin: "kàn", meaning: "to look at, to watch, to read", lesson: "7", pos: "v." },
+            { hanzi: "明天", pinyin: "míngtiān", meaning: "tomorrow", lesson: "7", pos: "n." },
+            { hanzi: "请", pinyin: "qǐng", meaning: "(polite) please", lesson: "7", pos: "v." },
+            { hanzi: "去", pinyin: "qù", meaning: "to go", lesson: "7", pos: "v." },
+            { hanzi: "书", pinyin: "shū", meaning: "book", lesson: "7", pos: "n." },
+            { hanzi: "星期", pinyin: "xīngqī", meaning: "week", lesson: "7", pos: "n." },
+            { hanzi: "学校", pinyin: "xuéxiào", meaning: "school", lesson: "7", pos: "n." },
+            { hanzi: "月", pinyin: "yuè", meaning: "month", lesson: "7", pos: "n." },
+            { hanzi: "昨天", pinyin: "zuótiān", meaning: "yesterday", lesson: "7", pos: "n." },
+            { hanzi: "问", pinyin: "wèn", meaning: "to ask, to inquire", lesson: "7", pos: "v." },
+            { hanzi: "号", pinyin: "hào", meaning: "(for date of month) number", lesson: "7", pos: "n." },
+          
+            { hanzi: "杯子", pinyin: "bēizi", meaning: "cup, glass", lesson: "8", pos: "n." },
+            { hanzi: "茶", pinyin: "chá", meaning: "tea", lesson: "8", pos: "n." },
+            { hanzi: "吃", pinyin: "chī", meaning: "to eat", lesson: "8", pos: "v." },
+            { hanzi: "个", pinyin: "gè", meaning: "a general measure word", lesson: "8", pos: "m." },
+            { hanzi: "喝", pinyin: "hē", meaning: "to drink", lesson: "8", pos: "v." },
+            { hanzi: "块", pinyin: "kuài", meaning: "a unit of money, same as 'yuan'", lesson: "8", pos: "m." },
+            { hanzi: "买", pinyin: "mǎi", meaning: "to buy, to purchase", lesson: "8", pos: "v." },
+            { hanzi: "米饭", pinyin: "mǐfàn", meaning: "cooked rice", lesson: "8", pos: "n." },
+            { hanzi: "那", pinyin: "nà", meaning: "that", lesson: "8", pos: "pron." },
+            { hanzi: "钱", pinyin: "qián", meaning: "money", lesson: "8", pos: "n." },
+            { hanzi: "商店", pinyin: "shāngdiàn", meaning: "shop, store", lesson: "8", pos: "n." },
+            { hanzi: "下午", pinyin: "xiàwǔ", meaning: "afternoon", lesson: "8", pos: "n." },
+            { hanzi: "想", pinyin: "xiǎng", meaning: "to want, would like", lesson: "8", pos: "mod." },
+            { hanzi: "这", pinyin: "zhè", meaning: "this", lesson: "8", pos: "pron." },
+            { hanzi: "多少", pinyin: "duōshao", meaning: "how many, how much", lesson: "8", pos: "pron." },
+
+            { hanzi: "爸爸", pinyin: "bàba", meaning: "father", lesson: "9", pos: "n." },
+            { hanzi: "狗", pinyin: "gǒu", meaning: "dog", lesson: "9", pos: "n." },
+            { hanzi: "工作", pinyin: "gōngzuò", meaning: "to work; job", lesson: "9", pos: "v./n." },
+            { hanzi: "猫", pinyin: "māo", meaning: "cat", lesson: "9", pos: "n." },
+            { hanzi: "哪儿", pinyin: "nǎr", meaning: "where", lesson: "9", pos: "pron." },
+            { hanzi: "女儿", pinyin: "nǚ'ér", meaning: "daughter", lesson: "9", pos: "n." },
+            { hanzi: "医生", pinyin: "yīshēng", meaning: "doctor", lesson: "9", pos: "n." },
+            { hanzi: "医院", pinyin: "yīyuàn", meaning: "hospital", lesson: "9", pos: "n." },
+            { hanzi: "椅子", pinyin: "yǐzi", meaning: "chair", lesson: "9", pos: "n." },
+            { hanzi: "在", pinyin: "zài", meaning: "to be in/on/at; in/on/at", lesson: "9", pos: "v./prep." },
+            { hanzi: "下", pinyin: "xià", meaning: "under, below", lesson: "9", pos: "n." },
+            { hanzi: "下面", pinyin: "xiàmiàn", meaning: "under, below", lesson: "9", pos: "n." },
+            { hanzi: "那儿", pinyin: "nàr", meaning: "there", lesson: "9", pos: "pron." },
+            { hanzi: "小", pinyin: "xiǎo", meaning: "small, little", lesson: "9", pos: "adj." },
+
+            { hanzi: "本", pinyin: "běn", meaning: "a measure word for books", lesson: "10", pos: "m." },
+            { hanzi: "电脑", pinyin: "diànnǎo", meaning: "computer", lesson: "10", pos: "n." },
+            { hanzi: "和", pinyin: "hé", meaning: "and", lesson: "10", pos: "conj." },
+            { hanzi: "后面", pinyin: "hòumiàn", meaning: "back", lesson: "10", pos: "n." },
+            { hanzi: "里", pinyin: "lǐ", meaning: "inner, inside, interior", lesson: "10", pos: "n." },
+            { hanzi: "没有", pinyin: "méiyǒu", meaning: "there is not", lesson: "10", pos: "adv." },
+            { hanzi: "能", pinyin: "néng", meaning: "can, may", lesson: "10", pos: "mod." },
+            { hanzi: "前面", pinyin: "qiánmiàn", meaning: "front", lesson: "10", pos: "n." },
+            { hanzi: "上", pinyin: "shàng", meaning: "up, above", lesson: "10", pos: "n." },
+            { hanzi: "桌子", pinyin: "zhuōzi", meaning: "desk, table", lesson: "10", pos: "n." },
+            { hanzi: "坐", pinyin: "zuò", meaning: "to sit, to be seated", lesson: "10", pos: "v." },
+            { hanzi: "王方", pinyin: "Wáng Fāng", meaning: "Wang Fang, name of a person", lesson: "10", pos: "n." },
+            { hanzi: "这儿", pinyin: "zhèr", meaning: "here", lesson: "10", pos: "pron." },
+
+            { hanzi: "电影", pinyin: "diànyǐng", meaning: "film, movie", lesson: "11", pos: "n." },
+            { hanzi: "回", pinyin: "huí", meaning: "to come/go back, to return", lesson: "11", pos: "v." },
+            { hanzi: "时候", pinyin: "shíhou", meaning: "time, moment", lesson: "11", pos: "n." },
+            { hanzi: "我们", pinyin: "wǒmen", meaning: "we, us", lesson: "11", pos: "pron." },
+            { hanzi: "现在", pinyin: "xiànzài", meaning: "now", lesson: "11", pos: "n." },
+            { hanzi: "中午", pinyin: "zhōngwǔ", meaning: "noon", lesson: "11", pos: "n." },
+            { hanzi: "住", pinyin: "zhù", meaning: "to live, to stay", lesson: "11", pos: "v." },
+            { hanzi: "北京", pinyin: "Běijīng", meaning: "Beijing, capital of China", lesson: "11", pos: "n." },
+            { hanzi: "吃饭", pinyin: "chī fàn", meaning: "to eat a meal", lesson: "11", pos: "v." },
+            { hanzi: "分", pinyin: "fēn", meaning: "minute", lesson: "11", pos: "m." },
+            { hanzi: "前", pinyin: "qián", meaning: "before, earlier than", lesson: "11", pos: "n." },
+            { hanzi: "点", pinyin: "diǎn", meaning: "o'clock", lesson: "11", pos: "m." },
+
+            { hanzi: "爱", pinyin: "ài", meaning: "to like, to love", lesson: "12", pos: "v." },
+            { hanzi: "来", pinyin: "lái", meaning: "to come", lesson: "12", pos: "v." },
+            { hanzi: "冷", pinyin: "lěng", meaning: "cold", lesson: "12", pos: "adj." },
+            { hanzi: "热", pinyin: "rè", meaning: "hot", lesson: "12", pos: "adj." },
+            { hanzi: "水", pinyin: "shuǐ", meaning: "water", lesson: "12", pos: "n." },
+            { hanzi: "水果", pinyin: "shuǐguǒ", meaning: "fruit", lesson: "12", pos: "n." },
+            { hanzi: "太", pinyin: "tài", meaning: "too, excessively", lesson: "12", pos: "adv." },
+            { hanzi: "天气", pinyin: "tiānqì", meaning: "weather", lesson: "12", pos: "n." },
+            { hanzi: "下雨", pinyin: "xià yǔ", meaning: "to rain", lesson: "12", pos: "v." },
+            { hanzi: "下", pinyin: "xià", meaning: "(of rain, snow, etc.) to fall", lesson: "12", pos: "v." },
+            { hanzi: "小姐", pinyin: "xiǎojie", meaning: "miss, young lady", lesson: "12", pos: "n." },
+            { hanzi: "些", pinyin: "xiē", meaning: "some, a few", lesson: "12", pos: "m." },
+            { hanzi: "怎么样", pinyin: "zěnmeyàng", meaning: "(indicating nature, condition or manner)", lesson: "12", pos: "pron." },
+            { hanzi: "身体", pinyin: "shēntǐ", meaning: "body", lesson: "12", pos: "n." },
+            { hanzi: "雨", pinyin: "yǔ", meaning: "rain", lesson: "12", pos: "n." },
+            { hanzi: "太……了", pinyin: "tài……le", meaning: "too, excessively", lesson: "12" },
+
+            { hanzi: "打电话", pinyin: "dǎ diànhuà", meaning: "to make a phone call", lesson: "13" },
+            { hanzi: "电视", pinyin: "diànshì", meaning: "television", lesson: "13", pos: "n." },
+            { hanzi: "睡觉", pinyin: "shuì jiào", meaning: "to sleep", lesson: "13", pos: "v." },
+            { hanzi: "喂", pinyin: "wèi", meaning: "hello, hey", lesson: "13", pos: "int." },
+            { hanzi: "喜欢", pinyin: "xǐhuān", meaning: "to like, to be fond of", lesson: "13", pos: "v." },
+            { hanzi: "学习", pinyin: "xuéxí", meaning: "to study, to learn", lesson: "13", pos: "v." },
+            { hanzi: "上午", pinyin: "shàngwǔ", meaning: "morning, before noon", lesson: "13", pos: "n." },
+            { hanzi: "吧", pinyin: "ba", meaning: "a modal particle used at the end of a sentence to indicate consultation, a suggestion, request or command", lesson: "13", pos: "part." },
+            { hanzi: "给", pinyin: "gěi", meaning: "to", lesson: "13", pos: "prep." },
+            { hanzi: "也", pinyin: "yě", meaning: "also, too", lesson: "13", pos: "adv." },
+
+            { hanzi: "东西", pinyin: "dōngxi", meaning: "thing, stuff", lesson: "14", pos: "n." },
+            { hanzi: "都", pinyin: "dōu", meaning: "both, all", lesson: "14", pos: "adv." },
+            { hanzi: "分钟", pinyin: "fēnzhōng", meaning: "minute", lesson: "14", pos: "n." },
+            { hanzi: "开", pinyin: "kāi", meaning: "to drive", lesson: "14", pos: "v." },
+            { hanzi: "看见", pinyin: "kàn jiàn", meaning: "to see", lesson: "14", pos: "v." },
+            { hanzi: "漂亮", pinyin: "piàoliang", meaning: "beautiful, pretty", lesson: "14", pos: "adj." },
+            { hanzi: "少", pinyin: "shǎo", meaning: "little, few", lesson: "14", pos: "adj." },
+            { hanzi: "先生", pinyin: "xiānsheng", meaning: "Mr., sir", lesson: "14", pos: "n." },
+            { hanzi: "衣服", pinyin: "yīfu", meaning: "clothes", lesson: "14", pos: "n." },
+            { hanzi: "一点儿", pinyin: "yìdiǎnr", meaning: "a few, a little", lesson: "14", pos: "num.-m." },
+            { hanzi: "这些", pinyin: "zhèxiē", meaning: "these", lesson: "14", pos: "pron." },
+            { hanzi: "不少", pinyin: "bùshǎo", meaning: "quite a few, many", lesson: "14", pos: "adj." },
+            { hanzi: "后", pinyin: "hòu", meaning: "after, afterwards, later", lesson: "14", pos: "n." },
+            { hanzi: "回来", pinyin: "huílái", meaning: "to come back", lesson: "14", pos: "v." },
+            { hanzi: "车", pinyin: "chē", meaning: "car, vehicle", lesson: "14", pos: "n." },
+            { hanzi: "啊", pinyin: "a", meaning: "a modal particle used at the end of a sentence as a sign of confirmation or defense", lesson: "14", pos: "part." },
+
+  // Lesson 15
+            { hanzi: "出租车", pinyin: "chūzūchē", meaning: "taxi, cab", lesson: "15", pos: "n." },
+            { hanzi: "饭店", pinyin: "fàndiàn", meaning: "hotel, restaurant", lesson: "15", pos: "n." },
+            { hanzi: "飞机", pinyin: "fēijī", meaning: "airplane", lesson: "15", pos: "n." },
+            { hanzi: "高兴", pinyin: "gāoxìng", meaning: "glad, happy", lesson: "15", pos: "adj." },
+            { hanzi: "年", pinyin: "nián", meaning: "year", lesson: "15", pos: "n." },
+            { hanzi: "听", pinyin: "tīng", meaning: "to listen", lesson: "15", pos: "v." },
+            { hanzi: "认识", pinyin: "rènshí", meaning: "to meet, to know", lesson: "15", pos: "v." },
+            { hanzi: "大学", pinyin: "dàxué", meaning: "college, university", lesson: "15", pos: "n." },
+            { hanzi: "一起", pinyin: "yìqǐ", meaning: "together", lesson: "15", pos: "adv." }
+
+        ];
+
+        let currentMode = 'hanzi'; // 默认汉字模式
+        let currentLesson = 'all'; // 默认全部课程
+
+        // 初始化卡片
+        function initCards() {
+            const container = document.getElementById('cards-container');
+            container.innerHTML = '';
+            
+            // 筛选当前课程的词汇
+            const filteredData = currentLesson === 'all' 
+                ? hsk1Data 
+                : hsk1Data.filter(item => item.lesson === currentLesson);
+            
+            filteredData.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                if (currentMode === 'hanzi') {
+                    card.innerHTML = `
+                        <div class="card-inner">
+                            <div class="card-face card-front">
+                                <div class="hanzi" data-chars="${item.hanzi.length}">${item.hanzi}</div>
+                                <div class="lesson-info">第${item.lesson}课</div>
+                            </div>
+                            <div class="card-face card-back">
+                                <div class="hsk-badge">3</div>
+                                <div class="pinyin">${item.pinyin}</div>
+                                <div class="meaning">${item.meaning}</div>
+                                <div class="lesson-info">第${item.lesson}课</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    card.innerHTML = `
+                        <div class="card-inner">
+                            <div class="card-face card-front">
+                                <div class="pinyin">${item.pinyin}</div>
+                                <div class="lesson-info">第${item.lesson}课</div>
+                            </div>
+                            <div class="card-face card-back-english">
+                                <div class="hsk-badge">3</div>
+                                <div class="meaning">${item.meaning}</div>
+                                <div class="lesson-info">第${item.lesson}课</div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                card.addEventListener('click', function() {
+                    this.classList.toggle('flipped');
+                });
+                
+                container.appendChild(card);
+            });
+        }
+
+        // 打乱卡片顺序
+        function shuffleCards() {
+            const container = document.getElementById('cards-container');
+            const cards = Array.from(container.querySelectorAll('.card'));
+            
+            // 移除所有卡片
+            cards.forEach(card => container.removeChild(card));
+            
+            // 打乱顺序
+            for (let i = cards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                container.appendChild(cards[j]);
+                cards.splice(j, 1);
+            }
+            
+            // 添加剩余的卡片
+            cards.forEach(card => container.appendChild(card));
+        }
+
+        // 翻转所有卡片
+        function flipAllCards() {
+            const cards = document.querySelectorAll('.card');
+            const allFlipped = Array.from(cards).every(card => card.classList.contains('flipped'));
+            
+            cards.forEach(card => {
+                if (allFlipped) {
+                    card.classList.remove('flipped');
+                } else {
+                    card.classList.add('flipped');
+                }
+            });
+        }
+
+        // 切换模式
+        function switchMode(mode) {
+            currentMode = mode;
+            document.getElementById('hanzi-mode').classList.toggle('active', mode === 'hanzi');
+            document.getElementById('pinyin-mode').classList.toggle('active', mode === 'pinyin');
+            initCards();
+        }
+
+        // 切换课程
+        function switchLesson(lesson) {
+            currentLesson = lesson;
+            initCards();
+        }
+
+        // 事件监听
+        document.getElementById('shuffle-btn').addEventListener('click', shuffleCards);
+        document.getElementById('flip-all').addEventListener('click', flipAllCards);
+        document.getElementById('reset-btn').addEventListener('click', initCards);
+        document.getElementById('hanzi-mode').addEventListener('click', () => switchMode('hanzi'));
+        document.getElementById('pinyin-mode').addEventListener('click', () => switchMode('pinyin'));
+        document.getElementById('lesson-select').addEventListener('change', (e) => switchLesson(e.target.value));
+
+        // 初始化
+        initCards();
+    </script>
+</body>
+</html>
